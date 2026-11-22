@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.waypointjournal.qa.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["MinecraftMixin", "RendererMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

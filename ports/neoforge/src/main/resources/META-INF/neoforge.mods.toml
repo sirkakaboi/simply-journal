@@ -1,0 +1,16 @@
+modLoader="lowcodefml"
+loaderVersion="[1,)"
+license="All Rights Reserved"
+[[mods]]
+modId="waypointjournal"
+version="1.0"
+displayName="Simply Journal"
+iconFile="assets/waypointjournal/icon.png"
+description="A 3D waypoint journal with notes and world-space navigation."
+[[mixins]]
+config="waypointjournal.mixins.json"
+[[dependencies.waypointjournal]]
+modId="minecraft"
+type="required"
+versionRange="[26.3]"
+side="CLIENT"

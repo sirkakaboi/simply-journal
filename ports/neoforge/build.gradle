@@ -1,0 +1,49 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+version = '1.0'
+group = 'dev.waypointjournal'
+def mc = project.findProperty('mc') ?: '26.3'
+def versions = new groovy.json.JsonSlurper().parse(file('../versions.json'))
+base { archivesName = "simply-journal-${mc}-neoforge" }
+java.toolchain.languageVersion = JavaLanguageVersion.of(mc.startsWith('26.') ? 25 : 21)
+sourceSets.main {
+    java {
+        srcDirs = mc == '26.3' ? ['../../src/main/java', '../loader/java', 'src/main/java']
+            : ["../versions/${mc}/java", mc == '26.2' ? 'src/main/java' : 'src/buffer/java']
+        exclude '**/WaypointJournal.java', '**/XaeroCompat.java', '**/GuiRendererMixin.java'
+    }
+    resources {
+        srcDirs = ['../../src/main/resources', '../loader/resources', 'src/main/resources']
+        exclude 'fabric.mod.json', 'waypointjournal.mixins.json'
+    }
+}
+neoForge {
+    version = versions[mc].neoforge
+    runs { client { client(); gameDirectory = file("run-${mc}") } }
+    mods { waypointjournal { sourceSet(sourceSets.main) } }
+}
+processResources {
+    inputs.property('minecraft', mc)
+    inputs.property('qa', project.hasProperty('qa'))
+    from('../loader/resources/waypointjournal.mixins.json')
+    doLast {
+        def mixins = file("${destinationDir}/waypointjournal.mixins.json")
+        mixins.text = mixins.text.replace('GuiRendererMixin', 'NeoGuiRendererMixin')
+        if (!mc.startsWith('26.')) mixins.text = mixins.text.replace('JAVA_25', 'JAVA_21')
+        def metadata = file("${destinationDir}/META-INF/neoforge.mods.toml")
+        metadata.text = metadata.text.replace('[26.3]', "[${mc}]")
+    }
+}
+tasks.named('jar') { from('../../LICENSE') }
+java.withSourcesJar()
+
+if (project.hasProperty('qa')) {
+    sourceSets.main.java.srcDir(mc == '26.3' ? '../qa/java' : "../qa/${mc}/java")
+    processResources {
+        from('../qa/resources')
+        doLast {
+            file("${destinationDir}/META-INF/neoforge.mods.toml").append('\n[[mixins]]\nconfig="waypointjournal-qa.mixins.json"\n')
+        }
+    }
+}

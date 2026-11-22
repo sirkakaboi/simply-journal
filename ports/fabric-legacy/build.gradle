@@ -1,0 +1,63 @@
+plugins { id 'net.fabricmc.fabric-loom-remap' version '1.17.21' }
+version = '1.0'
+group = 'dev.waypointjournal'
+def mc = project.findProperty('mc') ?: '1.21.11'
+def apiVersion = project.findProperty('api') ?: '0.141.6+1.21.11'
+base { archivesName = "simply-journal-${mc}-fabric" }
+repositories { mavenCentral() }
+dependencies {
+    minecraft "com.mojang:minecraft:${mc}"
+    modImplementation 'net.fabricmc:fabric-loader:0.20.1'
+    mappings loom.officialMojangMappings()
+    modImplementation fabricApi.module('fabric-resource-loader-v0', apiVersion)
+    include fabricApi.module('fabric-resource-loader-v0', apiVersion)
+    include fabricApi.module('fabric-api-base', apiVersion)
+}
+sourceSets.main {
+    java {
+        srcDirs = ["../versions/${mc}/java"]
+        exclude '**/WaypointJournal.java', '**/XaeroCompat.java'
+    }
+    resources {
+        srcDirs = ['../../src/main/resources']
+        exclude 'fabric.mod.json', 'waypointjournal.mixins.json'
+    }
+}
+java { sourceCompatibility = JavaVersion.VERSION_21; targetCompatibility = JavaVersion.VERSION_21; withSourcesJar() }
+processResources {
+    inputs.property('minecraft', mc)
+    inputs.property('qa', project.hasProperty('qa'))
+    inputs.file('../../src/main/resources/fabric.mod.json')
+    from('../loader/resources/waypointjournal.mixins.json') { filter { it.replace('JAVA_25', 'JAVA_21') } }
+    doLast {
+        def metadata = new groovy.json.JsonSlurper().parse(file('../../src/main/resources/fabric.mod.json'))
+        metadata.version = '1.0'
+        metadata.entrypoints = [:]
+        metadata.depends.minecraft = mc
+        metadata.depends.java = ">=21"
+        if (mc in ['1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5']) {
+            def config = file("${destinationDir}/waypointjournal.mixins.json")
+            def mixins = new groovy.json.JsonSlurper().parse(config)
+            mixins.client.removeAll(['GuiGraphicsAccessor', 'GuiRendererMixin'])
+            config.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(mixins))
+        }
+        file("${destinationDir}/fabric.mod.json").text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+    }
+}
+tasks.named('jar') { from('../../LICENSE') }
+
+loom { runs.client.runDir = "run-${mc}" }
+if (project.hasProperty('qa')) {
+    sourceSets.main.java.srcDir("../qa/${mc}/java")
+    processResources {
+        from('../qa/resources') { filter { it.replace('JAVA_25', 'JAVA_21') } }
+        doLast {
+            def metadataFile = file("${destinationDir}/fabric.mod.json")
+            def metadata = new groovy.json.JsonSlurper().parse(metadataFile)
+            metadata.mixins.add('waypointjournal-qa.mixins.json')
+            metadataFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+        }
+    }
+}
+
+apply from: '../multiloader.gradle'

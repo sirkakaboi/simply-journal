@@ -1,0 +1,55 @@
+plugins { id 'net.fabricmc.fabric-loom' version '1.17.21' }
+version = '1.0'
+group = 'dev.waypointjournal'
+def mc = project.findProperty('mc') ?: '26.2'
+def apiVersion = project.findProperty('api') ?: '0.161.0+26.2'
+base { archivesName = "simply-journal-${mc}-fabric" }
+repositories { mavenCentral() }
+dependencies {
+    minecraft "com.mojang:minecraft:${mc}"
+    implementation 'net.fabricmc:fabric-loader:0.20.1'
+    implementation "net.fabricmc.fabric-api:fabric-api:${apiVersion}"
+    include fabricApi.module('fabric-resource-loader-v1', apiVersion)
+    include fabricApi.module('fabric-api-base', apiVersion)
+}
+sourceSets.main {
+    java {
+        srcDirs = ["../versions/${mc}/java"]
+        exclude '**/WaypointJournal.java', '**/XaeroCompat.java'
+    }
+    resources {
+        srcDirs = ['../../src/main/resources']
+        exclude 'fabric.mod.json', 'waypointjournal.mixins.json'
+    }
+}
+java { sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25; withSourcesJar() }
+processResources {
+    inputs.property('minecraft', mc)
+    inputs.property('qa', project.hasProperty('qa'))
+    inputs.file('../../src/main/resources/fabric.mod.json')
+    from('../loader/resources/waypointjournal.mixins.json')
+    doLast {
+        def metadata = new groovy.json.JsonSlurper().parse(file('../../src/main/resources/fabric.mod.json'))
+        metadata.version = '1.0'
+        metadata.entrypoints = [:]
+        metadata.depends.minecraft = mc
+        file("${destinationDir}/fabric.mod.json").text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+    }
+}
+tasks.named('jar') { from('../../LICENSE') }
+
+loom { runs.client.runDir = "run-${mc}" }
+if (project.hasProperty('qa')) {
+    sourceSets.main.java.srcDir("../qa/${mc}/java")
+    processResources {
+        from('../qa/resources')
+        doLast {
+            def metadataFile = file("${destinationDir}/fabric.mod.json")
+            def metadata = new groovy.json.JsonSlurper().parse(metadataFile)
+            metadata.mixins.add('waypointjournal-qa.mixins.json')
+            metadataFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+        }
+    }
+}
+
+apply from: '../multiloader.gradle'

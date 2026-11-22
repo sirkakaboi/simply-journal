@@ -1,0 +1,64 @@
+def target = project.findProperty('mc') ?: '26.2'
+def matrix = new groovy.json.JsonSlurper().parse(file('../versions.json'))
+def directGui = target in ['1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5']
+repositories { maven { url = 'https://maven.neoforged.net/releases' } }
+configurations { neoApi }
+if (!directGui) {
+    dependencies { neoApi("net.neoforged:neoforge:${matrix[target].neoforge}:universal") { transitive = false } }
+}
+def glue = tasks.register('compileNeoGlue', JavaCompile) {
+    dependsOn tasks.named('classes')
+    if (!directGui) source = fileTree(target in ['26.2', '26.3'] ? '../neoforge/src/main/java' : '../neoforge/src/buffer/java')
+    classpath = sourceSets.main.compileClasspath + sourceSets.main.output + configurations.neoApi
+    destinationDirectory = layout.buildDirectory.dir('classes/java/neoforge')
+    sourceCompatibility = target.startsWith('26.') ? '25' : '21'
+    targetCompatibility = sourceCompatibility
+    options.encoding = 'UTF-8'
+}
+tasks.register('neoJar', Jar) {
+    dependsOn tasks.named('classes'), glue
+    archiveBaseName = "simply-journal-${target}-neoforge"
+    archiveVersion = '1.0'
+    from(sourceSets.main.output) {
+        exclude 'fabric.mod.json', 'waypointjournal.mixins.json', 'waypointjournal-qa.mixins.json', 'META-INF/jars/**'
+        exclude '**/GuiRendererMixin.class', '**/ReleaseCheck*', '**/PortCheck*', '**/qa/**'
+    }
+    from(glue.flatMap { it.destinationDirectory })
+    from('../../LICENSE')
+    def generated = layout.buildDirectory.dir('neoforge-resources')
+    from(generated)
+    doFirst {
+        def directory = generated.get().asFile
+        def meta = new File(directory, 'META-INF/neoforge.mods.toml')
+        meta.parentFile.mkdirs()
+        def description = new groovy.json.JsonSlurper().parse(file('../../src/main/resources/fabric.mod.json')).description
+        meta.text = 'modLoader="lowcodefml"\nloaderVersion="[1,)"\nlicense="All Rights Reserved"\n[[mods]]\nmodId="waypointjournal"\nversion="1.0"\ndisplayName="Simply Journal"\nlogoFile="assets/waypointjournal/icon.png"\ndescription=' + "'''" + description + "'''" + '\n[[mixins]]\nconfig="waypointjournal.mixins.json"\n[[dependencies.waypointjournal]]\nmodId="minecraft"\ntype="required"\nversionRange="[' + target + ']"\nside="CLIENT"\n'
+        def config = new groovy.json.JsonSlurper().parse(file('../loader/resources/waypointjournal.mixins.json'))
+        config.compatibilityLevel = target.startsWith('26.') ? 'JAVA_25' : 'JAVA_21'
+        if (directGui) config.client.removeAll(['GuiGraphicsAccessor', 'GuiRendererMixin'])
+        else config.client[config.client.indexOf('GuiRendererMixin')] = 'NeoGuiRendererMixin'
+        new File(directory, 'waypointjournal.mixins.json').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(config))
+    }
+}
+
+if (target.startsWith('26.')) {
+    tasks.register('forgeJar', Jar) {
+        dependsOn tasks.named('classes')
+        archiveBaseName = "simply-journal-${target}-forge"
+        archiveVersion = '1.0'
+        manifest { attributes 'MixinConfigs': 'waypointjournal.mixins.json' }
+        from(sourceSets.main.output) {
+            exclude 'fabric.mod.json', 'waypointjournal-qa.mixins.json', 'META-INF/jars/**'
+            exclude '**/ReleaseCheck*', '**/PortCheck*', '**/qa/**'
+        }
+        from('../../LICENSE')
+        def generated = layout.buildDirectory.dir('forge-resources')
+        from(generated)
+        doFirst {
+            def meta = new File(generated.get().asFile, 'META-INF/mods.toml')
+            meta.parentFile.mkdirs()
+            def description = new groovy.json.JsonSlurper().parse(file('../../src/main/resources/fabric.mod.json')).description
+            meta.text = 'modLoader="lowcodefml"\nloaderVersion="[1,)"\nlicense="All Rights Reserved"\nclientSideOnly=true\n[[mods]]\nmodId="waypointjournal"\nversion="1.0"\ndisplayName="Simply Journal"\nlogoFile="assets/waypointjournal/icon.png"\ndisplayTest="IGNORE_ALL_VERSION"\ndescription=' + "'''" + description + "'''" + '\n[[dependencies.waypointjournal]]\nmodId="minecraft"\nmandatory=true\nversionRange="[' + target + ']"\nside="CLIENT"\n'
+        }
+    }
+}

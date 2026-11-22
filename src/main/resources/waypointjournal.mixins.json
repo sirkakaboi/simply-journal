@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.waypointjournal.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["GuiGraphicsAccessor", "GuiRendererMixin", "LevelRendererMixin", "DeathMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "waypointjournal_qa",
+  "version": "1.0.0",
+  "name": "Waypoint Journal checks",
+  "environment": "client",
+  "mixins": ["waypointjournal-qa.mixins.json"],
+  "depends": { "waypointjournal": "*" }
+}

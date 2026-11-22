@@ -1,0 +1,21 @@
+Simply Journal 1.0 (first release builds)
+
+Install one jar matching your Minecraft version and loader. Servers do not need it.
+Use Java 21 for 1.21 versions and Java 25 for 26.x. Required Fabric resource modules are bundled.
+
+Fabric and NeoForge: 1.21, 1.21.1 through 1.21.11, 26.1, 26.1.1, 26.1.2, 26.2, 26.3.
+Forge 26.x: compiled files are in unverified-forge. These have not been launched.
+Forge 1.21.x: not included. The Forge remapping toolchain could not be downloaded (HTTP 403).
+
+Press ; to open the journal. The first launch includes a guide.
+Waypoints are separate for each world/server and persist across mod updates in the same game directory.
+Keep config/waypoint-journal when moving an instance. Singleplayer keys also use the save's absolute path.
+
+Checked in-game: Fabric 26.3 and 26.2, NeoForge 26.3, Fabric 1.21.1.
+The final 26.3 arrow and page-lighting fixes were reviewed in screenshots.
+Other version builds compiled, but have not had full playtests.
+A 26.1.2 delete-timer check failed before expiry was moved to Screen.tick; that check has not been rerun.
+Sodium 0.9.3, Lithium 0.26.4 and Xaero 26.6.2 were checked together on Fabric 26.3 before these rendering fixes.
+The optional Xaero red X is available in the Fabric 26.3 build only, for Xaero 26.6.2. Other versions skip the bridge.
+
+All rights reserved.

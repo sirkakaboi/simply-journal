@@ -1,0 +1,64 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+}
+
+version = '1.0'
+group = 'dev.waypointjournal'
+
+base { archivesName = 'simply-journal' }
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:26.3'
+    compileOnly 'maven.modrinth:xaeros-minimap:MfxfgXaO'
+    implementation 'net.fabricmc:fabric-loader:0.20.1'
+    implementation 'net.fabricmc.fabric-api:fabric-resource-loader-v1:3.0.4+fcdff87f5d'
+    include 'net.fabricmc.fabric-api:fabric-resource-loader-v1:3.0.4+fcdff87f5d'
+    implementation 'net.fabricmc.fabric-api:fabric-key-mapping-api-v1:2.0.8+3434d6d95d'
+    include 'net.fabricmc.fabric-api:fabric-key-mapping-api-v1:2.0.8+3434d6d95d'
+    implementation 'net.fabricmc.fabric-api:fabric-lifecycle-events-v1:4.1.9+ffef5f675d'
+    include 'net.fabricmc.fabric-api:fabric-lifecycle-events-v1:4.1.9+ffef5f675d'
+    include 'net.fabricmc.fabric-api:fabric-api-base:2.0.6+fcdff87f5d'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+
+tasks.named('jar') { from('LICENSE') }
+
+if (project.hasProperty('qa')) {
+    sourceSets {
+        qa {
+            compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+            runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+        }
+    }
+    loom {
+        runs.client.runDir = project.findProperty('qaDir') ?: 'run-qa'
+        mods {
+            waypointjournal { sourceSet sourceSets.main }
+            waypointjournal_qa { sourceSet sourceSets.qa }
+        }
+    }
+    tasks.named('runClient') {
+        dependsOn tasks.named('qaClasses')
+        classpath += sourceSets.qa.output
+    }
+}

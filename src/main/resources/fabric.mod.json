@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "waypointjournal",
+  "version": "${version}",
+  "name": "Simply Journal",
+  "description": "Keep losing your bases or important structures or EVEN your death locations' place? Then use my mod, Simply Journal; you can save your current position to a 3D journal book which can be opened by the semicolon (;) and even drop notes on some places! You can even travel to the place with an arrow guiding you super easily! Literally a QoL mod you didn't know you needed. Have fun!",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.waypointjournal.WaypointJournal"
+    ]
+  },
+  "mixins": [
+    "waypointjournal.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "26.3",
+    "java": ">=25"
+  },
+  "icon": "assets/waypointjournal/icon.png",
+  "license": "All Rights Reserved"
+}
