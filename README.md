@@ -46,6 +46,4 @@ The config directory, world/server keys, JSON fields, and internal `waypointjour
 
  Run the in-game checks with `./gradlew.bat -Pqa runClient`. This creates a separate test world in `run-qa/`, checks editing, navigation, persistence, page controls, and death capture, then saves screenshots in `run-qa/render-checks/`.
 
-(note: i accidentally deleted `python build-release.py` my bad)
-
 All rights reserved.
