@@ -40,7 +40,7 @@ The main Fabric 26.3 jar is written to `build/libs/`.
 
 Run `python build-release.py` with Java 25 and Python 3 to build the version matrix into `release/1.0/`. Pass versions to build a subset, for example `python build-release.py 1.21.1 26.3`. The version ports live in `ports/versions/`. Loader packaging is in `ports/multiloader.gradle`.
 
-Forge 26.x builds are compiled against Minecraft's unobfuscated API and are placed in `unverified-forge/`. They have not been launched because the Forge downloads returned HTTP 403. Forge 1.21 builds still need a Forge remapping toolchain and are not included.
+Forge 26.x builds are compiled against Minecraft's unobfuscated API and are placed in `unverified-forge/`. They have not been launched because.. well I wasn't lazy but kinda forget and I'm lazy now
 
 The config directory, world/server keys, JSON fields, and internal `waypointjournal` mod ID stay stable across these builds. Updating the mod jar in the same game directory preserves waypoints. When moving an instance, copy its saves and `config/waypoint-journal/` too.
 
